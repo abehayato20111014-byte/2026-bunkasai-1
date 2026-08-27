@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>4択クイズ</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 500px; }
+    .form-group { margin-bottom: 12px; }
+    button { margin: 5px 0; padding: 10px; width: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <h2>生徒情報入力</h2>
+  <div class="form-group">
+    <label>学年:
+      <select id="grade">
+        <option value="中1">中1</option>
+        <option value="中2">中2</option>
+        <option value="中3">中3</option>
+        <option value="高1">高1</option>
+        <option value="高2">高2</option>
+        <option value="高3">高3</option>
+      </select>
+    </label>
+  </div>
+  <div class="form-group">
+    <label>クラス:
+      <select id="classNum">
+        <option value="1">1組</option>
+        <option value="2">2組</option>
+        <option value="3">3組</option>
+        <option value="4">4組</option>
+        <option value="5">5組</option>
+        <option value="6">6組</option>
+        <option value="7">7組</option>
+      </select>
+    </label>
+  </div>
+  <div class="form-group">
+    <label>出席番号:
+      <input type="number" id="studentNo" min="1" placeholder="例: 15" required>
+    </label>
+  </div>
+
+  <hr>
+
+  <h2>問題</h2>
+  <p>水の化学式として正しいものはどれ？</p>
+  <div id="quiz-options">
+    <button class="choice" data-correct="false">CO2</button>
+    <button class="choice" data-correct="true">H2O</button>
+    <button class="choice" data-correct="false">NaCl</button>
+    <button class="choice" data-correct="false">O2</button>
+  </div>
+
+  <p id="result-message" style="font-weight: bold;"></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDiezBGdh7DR_OBG6TLBuQ_Ug5jLCqvQCI",
+      authDomain: "element-symbols-in-science.firebaseapp.com",
+      databaseURL: "https://element-symbols-in-science-default-rtdb.firebaseio.com",
+      projectId: "element-symbols-in-science",
+      storageBucket: "element-symbols-in-science.firebasestorage.app",
+      messagingSenderId: "1080729536422",
+      appId: "1:1080729536422:web:fd42fff3ee627014497167"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const buttons = document.querySelectorAll('.choice');
+    const messageEl = document.getElementById('result-message');
+
+    buttons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const studentNo = document.getElementById('studentNo').value;
+        if (!studentNo) {
+          alert('出席番号を入力してください');
+          return;
+        }
+
+        const isCorrect = button.getAttribute('data-correct') === 'true';
+
+        if (isCorrect) {
+          messageEl.style.color = "green";
+          messageEl.innerText = "正解！ データを送信しました。";
+
+          // 正解時のみ Firebase へ送信
+          await push(ref(db, 'answers'), {
+            grade: document.getElementById('grade').value,
+            classNum: document.getElementById('classNum').value,
+            studentNo: studentNo,
+            timestamp: Date.now()
+          });
+        } else {
+          // 不正解時は Firebase 送信なし
+          messageEl.style.color = "red";
+          messageEl.innerText = "不正解！ 再度試してください。";
+        }
+      });
+    });
+  </script>
+</body>
+</html>
